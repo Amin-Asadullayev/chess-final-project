@@ -1,5 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <string>
+#include <algorithm>
+#include <cctype>
+#include <windows.h>
 
 int max(int a, int b){
     return a > b ? a : b;
@@ -11,6 +15,39 @@ int min(int a, int b){
 
 int abs(int a){
     return a >= 0 ? a : -a;
+}
+
+int convert(char a){
+    int b;
+    switch(a){
+        case 'a':
+            b = 0;
+            break;
+        case 'b':
+            b = 1;
+            break;
+        case 'c':
+            b = 2;
+            break;
+        case 'd':
+            b = 3;
+            break;
+        case 'e':
+            b = 4;
+            break;
+        case 'f':
+            b = 5;
+            break;
+        case 'g':
+            b = 6;
+            break;
+        case 'h':
+            b = 7;
+            break;
+        default:
+            b = 8;
+    }
+    return b;
 }
 
 struct Position{
@@ -31,10 +68,12 @@ class Piece{
         }
 
         virtual bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const = 0;
+        virtual char getChar() const = 0;
 };
 
-class Rook : Piece{
+class Rook : public Piece{
     public:
+        Rook(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (pos.x == x){
@@ -51,10 +90,15 @@ class Rook : Piece{
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
         }
+
+        char getChar() const override {
+            return this->color == 'w' ? 'R' : 'r';
+        }
 };
 
-class Bishop : Piece{
+class Bishop : public Piece{
     public:
+        Bishop(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (abs(x - pos.x) == abs(y - pos.y)){
@@ -68,30 +112,45 @@ class Bishop : Piece{
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
         }
-};
 
-class Knight : Piece{
-    public:
-        bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
-            if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
-            if (!((abs(x - pos.x) == 2 && abs(y - pos.y) == 1) || (abs(x - pos.x) == 1 && abs(y - pos.y) == 2))) return false;
-            if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
-            return true;
+        char getChar() const override {
+            return this->color == 'w' ? 'B' : 'b';
         }
 };
 
-class King : Piece{
+class Knight : public Piece{
     public:
+        Knight(char color, int x, int y) : Piece(color, x, y) {}
+        bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
+            if (!((abs(x - pos.x) * abs(y - pos.y) == 2))) return false;
+            if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
+            return true;
+        }
+
+        char getChar() const override {
+            return this->color == 'w' ? 'N' : 'n';
+        }
+};
+
+class King : public Piece{
+    public:
+        King(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (!(abs(x - pos.x) <= 1 && abs(y - pos.y) <= 1)) return false;
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
         }
+
+        char getChar() const override {
+            return this->color == 'w' ? 'K' : 'k';
+        }
 };
 
-class Pawn : Piece{
+class Pawn : public Piece{
     public:
+        Pawn(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             int coef = this->color == 'w' ? 1 : -1, dx = x - pos.x;
@@ -107,10 +166,15 @@ class Pawn : Piece{
             }
             return false;
         }
+
+        char getChar() const override {
+            return this->color == 'w' ? 'P' : 'p';
+        }
 };
 
-class Queen : Piece{
+class Queen : public Piece{
     public:
+        Queen(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (pos.x == x){
@@ -132,9 +196,117 @@ class Queen : Piece{
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
         }
+
+        char getChar() const override {
+            return this->color == 'w' ? 'Q' : 'q';
+        }
+};
+
+class Game{
+    std::vector<std::vector<Piece*>> board{8, std::vector<Piece*>(8, nullptr)};
+    char turn;
+
+    public:
+        HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
+        Game(){
+            turn = 'w';
+            board[0][0] = new Rook('w', 0, 0);
+            board[0][1] = new Knight('w', 0, 1);
+            board[0][2] = new Bishop('w', 0, 2);
+            board[0][3] = new Queen('w', 0, 3);
+            board[0][4] = new King('w', 0, 4);
+            board[0][5] = new Bishop('w', 0, 5);
+            board[0][6] = new Knight('w', 0, 6);
+            board[0][7] = new Rook('w', 0, 7);
+            board[1][0] = new Pawn('w', 1, 0);
+            board[1][1] = new Pawn('w', 1, 1);
+            board[1][2] = new Pawn('w', 1, 2);
+            board[1][3] = new Pawn('w', 1, 3);
+            board[1][4] = new Pawn('w', 1, 4);
+            board[1][5] = new Pawn('w', 1, 5);
+            board[1][6] = new Pawn('w', 1, 6);
+            board[1][7] = new Pawn('w', 1, 7);
+            board[7][0] = new Rook('b', 7, 0);
+            board[7][1] = new Knight('b', 7, 1);
+            board[7][2] = new Bishop('b', 7, 2);
+            board[7][3] = new Queen('b', 7, 3);
+            board[7][4] = new King('b', 7, 4);
+            board[7][5] = new Bishop('b', 7, 5);
+            board[7][6] = new Knight('b', 7, 6);
+            board[7][7] = new Rook('b', 7, 7);
+            board[6][0] = new Pawn('b', 6, 0);
+            board[6][1] = new Pawn('b', 6, 1);
+            board[6][2] = new Pawn('b', 6, 2);
+            board[6][3] = new Pawn('b', 6, 3);
+            board[6][4] = new Pawn('b', 6, 4);
+            board[6][5] = new Pawn('b', 6, 5);
+            board[6][6] = new Pawn('b', 6, 6);
+            board[6][7] = new Pawn('b', 6, 7);
+        }
+
+        void print(){
+            for (int i = 7; i >= 0; i--) {
+                std::cout << i + 1 << "|";
+                for (int j = 0; j < 8; j++) {
+                    WORD bgColor = (i+j) % 2 == 0 ? BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE : BACKGROUND_INTENSITY;
+                    if (board[i][j] != nullptr) {
+                        WORD fgColor = (board[i][j]->color == 'w') ? FOREGROUND_GREEN | FOREGROUND_RED: 0;
+                        SetConsoleTextAttribute(hcon, fgColor | bgColor);
+                        std::cout << board[i][j]->getChar() << " ";
+                    } else {
+                        SetConsoleTextAttribute(hcon, bgColor);
+                        std::cout << "  ";
+                    }
+                }
+                SetConsoleTextAttribute(hcon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+                std::cout << std::endl;
+            }
+            std::cout<<"  _______________"<<std::endl;
+            std::cout<<"  a b c d e f g h"<<std::endl;
+        }
+
+        bool move(int x1, int y1, int x2, int y2){
+            if (x1 == x2 && y1 == y2) return false;
+            if (board[x1][y1] == nullptr || board[x1][y1]->color != this->turn) return false;
+            if (board[x1][y1]->isValid(x2, y2, board)){
+                if (board[x2][y2] != nullptr) delete board[x2][y2];
+                board[x2][y2] = board[x1][y1];
+                board[x1][y1] = nullptr; 
+                board[x2][y2]->setPosition(x2, y2);
+                turn = turn == 'w' ? 'b' : 'w'; 
+                return true;
+            } 
+        }
+
 };
 
 int main(){
+    Game newGame = Game{};
+    std::string from, to;
+    bool flag = false;
+    while (true){
+        system("cls");
+        newGame.print();
+        if (flag) std::cout<<"Invalid move!"<<std::endl;
+        std::cout<<"Enter your move: ";
+        std::cin>>from>>to;
+        std::transform(from.begin(), from.end(), from.begin(), ::tolower);
+        std::transform(to.begin(), to.end(), to.begin(), ::tolower);
+        if (from == "exit") return 0;
+        if (from.length() != 2 || to.length() != 2) {
+            flag = true;
+            continue;
+        } else {
+            flag = false;
+            if (from[0] > 'h' || from[0] < 'a' || to[0] > 'h' || to[0] < 'a' || from[1] > '8' || from[1] < '1' || to[1] > '8' || to[1] < '1' ){
+                flag = true;
+                continue;
+            }
+            int y1 = convert(from[0]), y2 = convert(to[0]), x1 = from[1] - '1', x2 = to[1] - '1';
+            if(!newGame.move(x1, y1, x2, y2)) flag = true;
+        }
 
+        
+    }
     return 0;
 }
