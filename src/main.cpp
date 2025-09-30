@@ -75,6 +75,7 @@ class Rook : public Piece{
     public:
         Rook(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (pos.x == x){
                 for (int i = min(pos.y, y)+1; i < max(pos.y, y); i++){
@@ -100,6 +101,7 @@ class Bishop : public Piece{
     public:
         Bishop(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (abs(x - pos.x) == abs(y - pos.y)){
                 int dx = (x > pos.x) ? 1 : -1, dy = (y > pos.y) ? 1 : -1;
@@ -122,6 +124,7 @@ class Knight : public Piece{
     public:
         Knight(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (!((abs(x - pos.x) * abs(y - pos.y) == 2))) return false;
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
@@ -137,6 +140,7 @@ class King : public Piece{
     public:
         King(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (!(abs(x - pos.x) <= 1 && abs(y - pos.y) <= 1)) return false;
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
@@ -152,6 +156,7 @@ class Pawn : public Piece{
     public:
         Pawn(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             int coef = this->color == 'w' ? 1 : -1, dx = x - pos.x;
 
@@ -176,6 +181,7 @@ class Queen : public Piece{
     public:
         Queen(char color, int x, int y) : Piece(color, x, y) {}
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
+            if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
             if (pos.x == x){
                 for (int i = min(pos.y, y)+1; i < max(pos.y, y); i++){
@@ -244,6 +250,32 @@ class Game{
             board[6][7] = new Pawn('b', 6, 7);
         }
 
+        bool isCheck(char color){
+            char target = color == 'w' ? 'b' : 'w';
+            int kx, ky;
+            bool exitLoop = false;
+            for (int i = 0; i < 8; i++){
+                for (int j = 0; j < 8; j++){
+                    if (board[i][j] != nullptr && dynamic_cast<King*>(board[i][j]) != nullptr && board[i][j]->color == color){
+                        kx = board[i][j]->pos.x;
+                        ky = board[i][j]->pos.y;
+                        exitLoop = true;
+                        break;
+                    }
+                }
+                if (exitLoop) break;
+            }
+
+            for (int i = 0; i < 8; i++){
+                for (int j = 0; j < 8; j++){
+                    if (board[i][j] != nullptr && board[i][j]->color == target){
+                        if (board[i][j]->isValid(kx, ky, board)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         void print(){
             for (int i = 7; i >= 0; i--) {
                 std::cout << i + 1 << "|";
@@ -266,16 +298,28 @@ class Game{
         }
 
         bool move(int x1, int y1, int x2, int y2){
-            if (x1 == x2 && y1 == y2) return false;
             if (board[x1][y1] == nullptr || board[x1][y1]->color != this->turn) return false;
             if (board[x1][y1]->isValid(x2, y2, board)){
-                if (board[x2][y2] != nullptr) delete board[x2][y2];
+                bool nullflag = board[x2][y2] != nullptr, movedto;;
+                Piece* tempto = board[x2][y2];
+                if (nullflag) movedto = board[x2][y2]->moved;
+                Piece* tempfrom = board[x1][y1];
+                bool movedfrom = board[x1][y1]->moved;
+                if (nullflag) delete board[x2][y2];
                 board[x2][y2] = board[x1][y1];
                 board[x1][y1] = nullptr; 
                 board[x2][y2]->setPosition(x2, y2);
+                if(isCheck(this->turn)){
+                    board[x1][y1] = tempfrom;
+                    board[x1][y1]->moved = movedfrom;
+                    board[x2][y2] = tempto;
+                    if (nullflag) board[x2][y2]->moved = movedto;
+                    return false;
+                }
                 turn = turn == 'w' ? 'b' : 'w'; 
                 return true;
             } 
+            return false;
         }
 
 };
