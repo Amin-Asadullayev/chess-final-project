@@ -142,6 +142,19 @@ class King : public Piece{
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
+            if (pos.x == 0 && pos.y == 4){
+                if (x == 0 && y == 6){
+                    if (!(this->moved || dynamic_cast<Rook*>(board[0][7]) == nullptr || board[0][7]->moved || board[0][5] != nullptr || board[0][6] != nullptr)) return true;
+                } else if (x == 0 && y == 2){
+                    if (!(this->moved || dynamic_cast<Rook*>(board[0][0]) == nullptr || board[0][0]->moved || board[0][3] != nullptr || board[0][2] != nullptr || board[0][1] != nullptr)) return true;
+                }
+            } else if (pos.x == 7 && pos.y == 4){
+                if (x == 7 && y == 6){
+                    if (!(this->moved || this->color != 'b' || dynamic_cast<Rook*>(board[7][7]) == nullptr || board[7][7]->color != this->color || board[7][7]->moved || board[7][5] != nullptr || board[7][6] != nullptr)) return true;
+                } else if (x == 7 && y == 2){
+                    if (!(this->moved || this->color != 'b' || dynamic_cast<Rook*>(board[7][0]) == nullptr || board[7][0]->color != this->color || board[7][0]->moved || board[7][3] != nullptr || board[7][2] != nullptr || board[7][1] != nullptr)) return true;
+                }
+            }
             if (!(abs(x - pos.x) <= 1 && abs(y - pos.y) <= 1)) return false;
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
@@ -297,15 +310,90 @@ class Game{
             std::cout<<"  a b c d e f g h"<<std::endl;
         }
 
+        char getTurn(){
+            return this->turn;
+        }
+
+        bool isCheckMate(char color){
+            for (int i = 0; i < 8; i++){
+                for (int j = 0; j < 8; j++){
+                    if (board[i][j] != nullptr && board[i][j]->color == color){
+                        for (int a = 0; a < 8; a++){
+                            for (int b = 0; b < 8; b++){
+                                if (board[i][j]->isValid(a, b, board)){
+                                    bool nullflag = board[a][b] != nullptr;
+                                    Piece* tempto = board[a][b];
+                                    bool movedto = nullflag ? board[a][b]->moved : false;
+                                    Piece* tempfrom = board[i][j];
+                                    bool movedfrom = board[i][j]->moved;
+                                    board[a][b] = board[i][j];
+                                    board[i][j] = nullptr;
+                                    board[a][b]->setPosition(a, b);
+                                    bool stillInCheck = isCheck(color);
+                                    board[i][j] = tempfrom;
+                                    board[i][j]->moved = movedfrom;
+                                    board[a][b] = tempto;
+                                    if (nullflag) board[a][b]->moved = movedto;
+                                    if (!stillInCheck) return false;
+                                        }
+                                    }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        bool isCheckAt(int x, int y, char color) {
+            char opp = (color == 'w') ? 'b' : 'w';
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (board[i][j] != nullptr && board[i][j]->color == opp) {
+                        if (board[i][j]->isValid(x, y, board)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+
         bool move(int x1, int y1, int x2, int y2){
             if (board[x1][y1] == nullptr || board[x1][y1]->color != this->turn) return false;
+            if (dynamic_cast<King*>(board[x1][y1]) != nullptr && (((x1 == 0 && y1 == 4) && (x2 == 0 && (y2 == 6 || y2 == 2))) || ((x1 == 7 && y1 == 4) && (x2 == 7 && (y2 == 6 || y2 == 2))))) {
+                if (isCheck(this->turn)) return false;
+                if (x1 == 0 && y1 == 4 && x2 == 0 && y2 == 6 && isCheckAt(0, 5, this->turn)) return false;
+                if (x1 == 0 && y1 == 4 && x2 == 0 && y2 == 2 && isCheckAt(0, 3, this->turn)) return false;
+                if (x1 == 7 && y1 == 4 && x2 == 7 && y2 == 6 && isCheckAt(7, 5, this->turn)) return false;
+                if (x1 == 7 && y1 == 4 && x2 == 7 && y2 == 2 && isCheckAt(7, 3, this->turn)) return false;
+                if (x1 == 0 && y1 == 4 && y2 == 6) {
+                    board[0][5] = board[0][7];
+                    board[0][5]->setPosition(0,5);
+                    board[0][7] = nullptr;
+                } else if (x1 == 0 && y1 == 4 && y2 == 2) {
+                    board[0][3] = board[0][0];
+                    board[0][3]->setPosition(0,3);
+                    board[0][0] = nullptr;
+                } else if (x1 == 7 && y1 == 4 && y2 == 6) {
+                    board[7][5] = board[7][7];
+                    board[7][5]->setPosition(7,5);
+                    board[7][7] = nullptr;
+                } else if (x1 == 7 && y1 == 4 && y2 == 2) {
+                    board[7][3] = board[7][0];
+                    board[7][3]->setPosition(7,3);
+                    board[7][0] = nullptr;
+                }
+                board[x2][y2] = board[x1][y1];
+                board[x1][y1] = nullptr;
+                board[x2][y2]->setPosition(x2, y2);
+                turn = turn == 'w' ? 'b' : 'w';
+                return true;
+            }
             if (board[x1][y1]->isValid(x2, y2, board)){
-                bool nullflag = board[x2][y2] != nullptr, movedto;;
                 Piece* tempto = board[x2][y2];
-                if (nullflag) movedto = board[x2][y2]->moved;
+                bool nullflag = tempto != nullptr;
+                bool movedto = nullflag ? tempto->moved : false;
                 Piece* tempfrom = board[x1][y1];
                 bool movedfrom = board[x1][y1]->moved;
-                if (nullflag) delete board[x2][y2];
                 board[x2][y2] = board[x1][y1];
                 board[x1][y1] = nullptr; 
                 board[x2][y2]->setPosition(x2, y2);
@@ -316,12 +404,12 @@ class Game{
                     if (nullflag) board[x2][y2]->moved = movedto;
                     return false;
                 }
+                if (nullflag) delete tempto;
                 turn = turn == 'w' ? 'b' : 'w'; 
                 return true;
             } 
             return false;
         }
-
 };
 
 int main(){
@@ -347,10 +435,13 @@ int main(){
                 continue;
             }
             int y1 = convert(from[0]), y2 = convert(to[0]), x1 = from[1] - '1', x2 = to[1] - '1';
-            if(!newGame.move(x1, y1, x2, y2)) flag = true;
-        }
-
-        
+            if(!newGame.move(x1, y1, x2, y2)) {flag = true;continue;}
+            if (newGame.isCheckMate(newGame.getTurn())) break;
+        }        
     }
+    system("cls");
+    newGame.print();
+    std::string thewin = (newGame.getTurn() == 'w' ? "Black" : "White");
+    std::cout<<thewin<<" has won the game by checkmate!"<<std::endl;
     return 0;
 }
