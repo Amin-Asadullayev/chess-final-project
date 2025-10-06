@@ -171,7 +171,7 @@ class Pawn : public Piece{
         bool isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const override {
             if (x == pos.x && y == pos.y) return false;
             if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
-            int coef = this->color == 'w' ? 1 : -1, dx = x - pos.x;
+            int coef = (this->color == 'w' ? 1 : -1), dx = x - pos.x;
 
             if(y - pos.y == 0){
                 if (coef == dx && board[x][y] == nullptr) return true;
@@ -209,9 +209,7 @@ class Queen : public Piece{
                 for (int i = 1; i < abs(x - pos.x); i++){
                     if (board[pos.x + dx*i][pos.y + dy*i] != nullptr) return false;
                 }
-            } else {
-                return false;
-            }
+            } else return false;
             if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
             return true;
         }
@@ -282,7 +280,9 @@ class Game{
             for (int i = 0; i < 8; i++){
                 for (int j = 0; j < 8; j++){
                     if (board[i][j] != nullptr && board[i][j]->color == target){
-                        if (board[i][j]->isValid(kx, ky, board)) return true;
+                        if (board[i][j]->isValid(kx, ky, board)) {
+                            return true;
+                        };
                     }
                 }
             }
@@ -315,6 +315,7 @@ class Game{
         }
 
         bool isCheckMate(char color){
+            if (!isCheck(color)) return false;
             for (int i = 0; i < 8; i++){
                 for (int j = 0; j < 8; j++){
                     if (board[i][j] != nullptr && board[i][j]->color == color){
@@ -331,6 +332,7 @@ class Game{
                                     board[a][b]->setPosition(a, b);
                                     bool stillInCheck = isCheck(color);
                                     board[i][j] = tempfrom;
+                                    board[i][j]->setPosition(i, j);
                                     board[i][j]->moved = movedfrom;
                                     board[a][b] = tempto;
                                     if (nullflag) board[a][b]->moved = movedto;
@@ -340,6 +342,58 @@ class Game{
                         }
                     }
                 }
+            }
+            return true;
+        }
+
+        bool isStaleMate(char color){
+            if (isCheck(color)) return false;
+            return isCheckMate(color); 
+        }
+
+        bool isPromAvail(int x, int y){
+            if (dynamic_cast<Pawn*>(board[x][y]) != nullptr){
+                if (board[x][y]->color == 'w' && x == 7 || board[x][y]->color == 'b' && x == 0) return true;
+            }
+            return false;
+        }
+
+        bool promote(int x, int y, char opt, char color){
+            switch (opt){
+                case 'q':
+                    delete board[x][y];
+                    board[x][y] = new Queen(color, x, y);
+                    break;
+                case 'Q':
+                    delete board[x][y];
+                    board[x][y] = new Queen(color, x, y);
+                    break;
+                case 'r':
+                    delete board[x][y];
+                    board[x][y] = new Rook(color, x, y);
+                    break;
+                case 'R':
+                    delete board[x][y];
+                    board[x][y] = new Rook(color, x, y);
+                    break;
+                case 'b':
+                    delete board[x][y];
+                    board[x][y] = new Bishop(color, x, y);
+                    break;
+                case 'B':
+                    delete board[x][y];
+                    board[x][y] = new Bishop(color, x, y);
+                    break;
+                case 'n':
+                    delete board[x][y];
+                    board[x][y] = new Knight(color, x, y);
+                    break;
+                case 'N':
+                    delete board[x][y];
+                    board[x][y] = new Knight(color, x, y);
+                    break;
+                default:
+                    return false;
             }
             return true;
         }
@@ -436,12 +490,31 @@ int main(){
             }
             int y1 = convert(from[0]), y2 = convert(to[0]), x1 = from[1] - '1', x2 = to[1] - '1';
             if(!newGame.move(x1, y1, x2, y2)) {flag = true;continue;}
-            if (newGame.isCheckMate(newGame.getTurn())) break;
+            if(newGame.isPromAvail(x2, y2)){
+                char dest;
+                while (true){
+                    system("cls");
+                    newGame.print();
+                    std::cout<<"Promote pawn to (Q/R/B/N): ";
+                    std::cin>>dest;
+                    if (newGame.promote(x2, y2, dest, newGame.getTurn() == 'w' ? 'b' : 'w')) break;
+                }
+            }
+            if (newGame.isCheckMate(newGame.getTurn())){
+                system("cls");
+                newGame.print();
+                std::string thewin = (newGame.getTurn() == 'w' ? "Black" : "White");
+                std::cout<<thewin<<" has won the game by checkmate!"<<std::endl;
+                break;
+            } else if (newGame.isStaleMate(newGame.getTurn())){
+                system("cls");
+                newGame.print();
+                std::cout<<"The game ends in stalemate!"<<std::endl;
+                break;
+            };
+
         }        
     }
-    system("cls");
-    newGame.print();
-    std::string thewin = (newGame.getTurn() == 'w' ? "Black" : "White");
-    std::cout<<thewin<<" has won the game by checkmate!"<<std::endl;
+    
     return 0;
 }
