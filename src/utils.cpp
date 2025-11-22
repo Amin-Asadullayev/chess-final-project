@@ -13,15 +13,18 @@ std::string generateGameFilename() {
     return ss.str();
 }
 
-int max(int a, int b) {
+template <typename T>
+T max(T a, T b) {
     return a > b ? a : b;
 }
 
-int min(int a, int b) {
+template <typename T>
+T min(T a, T b) {
     return a < b ? a : b;
 }
 
-int abs(int a) {
+template <typename T>
+T abs(T a) {
     return a >= 0 ? a : -a;
 }
 

@@ -49,9 +49,11 @@ void Game::print() {
     } else {
         sR = 0; eR = 8; rS = 1; sC = 7; eC = -1; cS = -1;
     }
+    //Printing the logo
     SetConsoleTextAttribute(hcon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
     std::cout<<logo<<std::endl;
     SetConsoleTextAttribute(hcon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    //Printing the board
     for (int i = sR; i != eR; i += rS) {
         std::cout << i + 1 << "|";
         for (int j = sC; j != eC; j += cS) {
@@ -69,6 +71,7 @@ void Game::print() {
         std::cout << std::endl;
     }
     std::cout<<"  _______________"<<std::endl;
+    //Mirroring the board for the blacks
     std::cout<<(this->getTurn()=='w' ? "  a b c d e f g h" : "  h g f e d c b a")<<std::endl;
 }
 

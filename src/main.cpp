@@ -13,6 +13,7 @@
 #include <fstream>
 #include <filesystem>
 
+//Menu for selecting a saved game
 std::string chooseSavedGame() {
     namespace fs = std::filesystem;
     std::vector<std::string> savedGames;
@@ -51,6 +52,7 @@ std::string chooseSavedGame() {
 }
 
 int main() {
+    //Main menu
     std::filesystem::create_directory("games");
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     int mode = 0;
@@ -80,6 +82,7 @@ MM.           MM      MM    MM   Y  , .     `MM .     `MM         ,;j9    8M    
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     }
 
+    //Take up and down arrow as input
     while (true) {
         if(kbhit()){
         ch = getch();
@@ -106,6 +109,7 @@ MM.           MM      MM    MM   Y  , .     `MM .     `MM         ,;j9    8M    
     }
     }
 
+    //Initialize a new game and its save files
     Game newGame(0);
     std::string fname = generateGameFilename();
     std::string moveHistoryFile = fname + "_moves.txt";
@@ -133,6 +137,7 @@ MM.           MM      MM    MM   Y  , .     `MM .     `MM         ,;j9    8M    
 
         if (from == "exit") return 0;
 
+        //Moves to coordinates
         if (from.length() != 2 || to.length() != 2) {
             flag = true;
             continue;
@@ -146,6 +151,7 @@ MM.           MM      MM    MM   Y  , .     `MM .     `MM         ,;j9    8M    
             int y1 = convert(from[0]), y2 = convert(to[0]);
             int x1 = from[1] - '1', x2 = to[1] - '1';
 
+            //Checking if the move is legal
             if (!newGame.move(x1, y1, x2, y2)) {
                 flag = true;
                 continue;
@@ -168,6 +174,7 @@ MM.           MM      MM    MM   Y  , .     `MM .     `MM         ,;j9    8M    
                 newGame.saveGameState(gameStateFile);
             }
 
+            //If checkmate or stalemate, end the game
             if (newGame.isCheckMate(newGame.getTurn())) {
                 system("cls");
                 newGame.print();
