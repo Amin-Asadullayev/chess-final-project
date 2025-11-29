@@ -6,10 +6,10 @@ bool Rook::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) 
     if (x == pos.x && y == pos.y) return false;
     if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
     if (pos.x == x) {
-        for (int i = std::min(pos.y, y)+1; i < std::max(pos.y, y); i++)
+        for (int i = minstd(pos.y, y)+1; i < maxstd(pos.y, y); i++)
             if (board[x][i] != nullptr) return false;
     } else if (pos.y == y) {
-        for (int i = std::min(pos.x, x)+1; i < std::max(pos.x, x); i++)
+        for (int i = minstd(pos.x, x)+1; i < maxstd(pos.x, x); i++)
             if (board[i][y] != nullptr) return false;
     } else return false;
     if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
@@ -21,9 +21,9 @@ char Rook::getChar() const { return color == 'w' ? 'R' : 'r'; }
 bool Bishop::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const {
     if (x == pos.x && y == pos.y) return false;
     if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
-    if (abs(x - pos.x) == abs(y - pos.y)) {
+    if (absstd(x - pos.x) == absstd(y - pos.y)) {
         int dx = (x > pos.x) ? 1 : -1, dy = (y > pos.y) ? 1 : -1;
-        for (int i = 1; i < abs(x - pos.x); i++)
+        for (int i = 1; i < absstd(x - pos.x); i++)
             if (board[pos.x + dx*i][pos.y + dy*i] != nullptr) return false;
     } else return false;
     if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
@@ -35,7 +35,7 @@ char Bishop::getChar() const { return color == 'w' ? 'B' : 'b'; }
 bool Knight::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) const {
     if (x == pos.x && y == pos.y) return false;
     if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
-    if (!(abs(x - pos.x) * abs(y - pos.y) == 2)) return false;
+    if (!(absstd(x - pos.x) * absstd(y - pos.y) == 2)) return false;
     if (board[x][y] != nullptr && board[x][y]->color == this->color) return false;
     return true;
 }
@@ -56,7 +56,7 @@ bool King::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) 
         if (x == 7 && y == 2)
             if (!(moved || color != 'b' || dynamic_cast<Rook*>(board[7][0]) == nullptr || board[7][0]->color != color || board[7][0]->moved || board[7][3] != nullptr || board[7][2] != nullptr || board[7][1] != nullptr)) return true;
     }
-    if (!(abs(x - pos.x) <= 1 && abs(y - pos.y) <= 1)) return false;
+    if (!(absstd(x - pos.x) <= 1 && absstd(y - pos.y) <= 1)) return false;
     if (board[x][y] != nullptr && board[x][y]->color == color) return false;
     return true;
 }
@@ -72,7 +72,7 @@ bool Pawn::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board) 
         if (dx == 2*coef && !moved && board[pos.x + coef][y] == nullptr && board[x][y] == nullptr) return true;
         return false;
     }
-    if (dx == coef && abs(y - pos.y) == 1) {
+    if (dx == coef && absstd(y - pos.y) == 1) {
         if (board[x][y] != nullptr && board[x][y]->color != color) return true;
         return false;
     }
@@ -85,14 +85,14 @@ bool Queen::isValid(int x, int y, const std::vector<std::vector<Piece*>> &board)
     if (x == pos.x && y == pos.y) return false;
     if (x < 0 || x >= 8 || y < 0 || y >= 8) return false;
     if (pos.x == x) {
-        for (int i = std::min(pos.y, y)+1; i < std::max(pos.y, y); i++)
+        for (int i = minstd(pos.y, y)+1; i < maxstd(pos.y, y); i++)
             if (board[x][i] != nullptr) return false;
     } else if (pos.y == y) {
-        for (int i = std::min(pos.x, x)+1; i < std::max(pos.x, x); i++)
+        for (int i = minstd(pos.x, x)+1; i < maxstd(pos.x, x); i++)
             if (board[i][y] != nullptr) return false;
-    } else if (abs(x - pos.x) == abs(y - pos.y)) {
+    } else if (absstd(x - pos.x) == absstd(y - pos.y)) {
         int dx = (x > pos.x) ? 1 : -1, dy = (y > pos.y) ? 1 : -1;
-        for (int i = 1; i < abs(x - pos.x); i++)
+        for (int i = 1; i < absstd(x - pos.x); i++)
             if (board[pos.x + dx*i][pos.y + dy*i] != nullptr) return false;
     } else return false;
     if (board[x][y] != nullptr && board[x][y]->color == color) return false;

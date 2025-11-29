@@ -7,26 +7,13 @@
 std::string generateGameFilename() {
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
-
+    std::tm buf;
+    localtime_s(&buf, &in_time_t);
     std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H-%M-%S");
+    ss << std::put_time(&buf, "%Y-%m-%d_%H-%M-%S");
     return ss.str();
 }
 
-template <typename T>
-T max(T a, T b) {
-    return a > b ? a : b;
-}
-
-template <typename T>
-T min(T a, T b) {
-    return a < b ? a : b;
-}
-
-template <typename T>
-T abs(T a) {
-    return a >= 0 ? a : -a;
-}
 
 int convert(char a) {
     int b;

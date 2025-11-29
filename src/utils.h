@@ -2,9 +2,20 @@
 #define UTILS_H
 #include <string>
 std::string generateGameFilename();
-int max(int a, int b);
-int min(int a, int b);
-int abs(int a);
+template <typename T>
+T maxstd(T a, T b) {
+    return (a > b) ? a : b;
+}
+
+template <typename T>
+T minstd(T a, T b) {
+    return (a < b) ? a : b;
+}
+
+template <typename T>
+T absstd(T a) {
+    return (a >= 0) ? a : -a;
+}
 int convert(char a);
 
 #endif

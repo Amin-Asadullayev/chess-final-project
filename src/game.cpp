@@ -77,7 +77,7 @@ void Game::print() {
 
 void Game::saveGameState(const std::string &filename) {
     std::ofstream out("games/"+filename, std::ios::app);
-    if (!out) return;
+    if (!out) throw std::runtime_error("Could not save the game!");
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
